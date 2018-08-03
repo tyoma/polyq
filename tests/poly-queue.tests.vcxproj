@@ -39,10 +39,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FifoTests.cpp" />
-    <ClCompile Include="QueueTests.cpp" />
+    <ClCompile Include="CircularBufferTests.cpp" />
+    <ClCompile Include="FifoTests.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="PolyEntryTests.cpp" />
+    <ClCompile Include="QueueTests.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\poly-queue\circular.h" />
+    <ClInclude Include="..\poly-queue\entry.h" />
     <ClInclude Include="..\poly-queue\fifo.h" />
     <ClInclude Include="..\poly-queue\queue.h" />
   </ItemGroup>

@@ -3,8 +3,8 @@ include_directories(../libraries/utee)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -frtti")
 
 set(PQ_TEST_SOURCES
-	FifoTests.cpp
-	QueueTests.cpp
+	CircularBufferTests.cpp
+	PolyEntryTests.cpp
 )
 
 add_library(poly-queue.tests SHARED ${PQ_TEST_SOURCES})

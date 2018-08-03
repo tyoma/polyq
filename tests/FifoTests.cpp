@@ -86,8 +86,8 @@ namespace pq
 			test( PushToASaturatedSequenceReallocatesBuffer )
 			{
 				// INIT
-				fifo<double> seq1(poly_entry::size<double>() * 2);
-				fifo<double> seq2(poly_entry::size<double>() * 5);
+				fifo<double> seq1(poly_entry<double>::size<double>() * 2);
+				fifo<double> seq2(poly_entry<double>::size<double>() * 5);
 
 				seq1.push_back(1.1);
 				seq2.push_back(11.2);
@@ -276,8 +276,8 @@ namespace pq
 			test( ElementsAreCopiedPolymorphicallyOnSequenceGrow )
 			{
 				// INIT
-				fifo<Foo> buffer1(poly_entry::size<Foo>() * 2 + poly_entry::size<Bar>());
-				fifo<int> buffer2(poly_entry::size<int>() * 2);
+				fifo<Foo> buffer1(poly_entry<Foo>::size<Foo>() * 2 + poly_entry<Foo>::size<Bar>());
+				fifo<int> buffer2(poly_entry<int>::size<int>() * 2);
 
 				buffer1.push_back(Foo(17)), buffer1.push_back(Bar(1811, 23)), buffer1.push_back(Foo(191));
 				buffer2.push_back(13), buffer2.push_back(200211);
@@ -320,7 +320,7 @@ namespace pq
 			{
 				// INIT
 				int n[2] = { 0 };
-				fifo<LifetimeAbstract> buffer(poly_entry::size<LifetimeAbstract>() * 3);
+				fifo<LifetimeAbstract> buffer(poly_entry<LifetimeAbstract>::size< LifetimeDerived<0> >() * 3);
 
 				buffer.push_back(LifetimeDerived<0>(n[0]));
 				buffer.push_back(LifetimeDerived<1>(n[1]));

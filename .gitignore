@@ -1,4 +1,6 @@
 _*
+.*
 *.sdf
 *.opensdf
 *.suo
+*.ipch

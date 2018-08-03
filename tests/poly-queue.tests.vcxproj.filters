@@ -3,12 +3,20 @@
   <ItemGroup>
     <ClCompile Include="QueueTests.cpp" />
     <ClCompile Include="FifoTests.cpp" />
+    <ClCompile Include="CircularBufferTests.cpp" />
+    <ClCompile Include="PolyEntryTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\poly-queue\queue.h">
       <Filter>poly-queue</Filter>
     </ClInclude>
     <ClInclude Include="..\poly-queue\fifo.h">
+      <Filter>poly-queue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\poly-queue\entry.h">
+      <Filter>poly-queue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\poly-queue\circular.h">
       <Filter>poly-queue</Filter>
     </ClInclude>
   </ItemGroup>
