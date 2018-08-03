@@ -48,7 +48,7 @@ namespace pq
 	inline void circular_buffer<T, EntryT>::produce(const FinalT &value, const PostProduceFn &postproduce)
 	{
 		entry_type::create(_write, _start, _end, value);
-		postproduce(_count.fetch_add(1, std::memory_order_release));
+		postproduce(_count.fetch_add(1, std::memory_order_release) + 1);
 	}
 
 	template <typename T, typename EntryT>

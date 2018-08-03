@@ -216,10 +216,10 @@ namespace pq
 				b4.produce(Foo(2119922), postproduce(n[3]));
 
 				// ASSERT
-				assert_equal(0, n[0]);
-				assert_equal(0, n[1]);
-				assert_equal(0, n[2]);
-				assert_equal(0, n[3]);
+				assert_equal(1, n[0]);
+				assert_equal(1, n[1]);
+				assert_equal(1, n[2]);
+				assert_equal(1, n[3]);
 
 				// ACT / ASSERT
 				assert_is_true(b1.consume(consumer<int>(log1), preconsume(n[0], true)));
@@ -258,7 +258,7 @@ namespace pq
 					int n = 11;
 
 					buffer.produce(123, postproduce(n));
-					assert_equal(-1, n);
+					assert_equal(0, n);
 					return true;
 				}
 
@@ -329,8 +329,8 @@ namespace pq
 				buffer2.produce(Foo(1111), postproduce(n[1]));
 
 				// ASSERT
-				assert_equal(2, n[0]);
-				assert_equal(4, n[1]);
+				assert_equal(3, n[0]);
+				assert_equal(5, n[1]);
 
 				// ACT
 				buffer1.consume(consumer<double>(log1), preconsume(n[0], true));
