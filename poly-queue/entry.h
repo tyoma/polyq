@@ -5,6 +5,7 @@ namespace pq
 	typedef unsigned char uint8_t;
 	typedef unsigned char byte;
 	typedef unsigned short int uint16_t;
+	typedef unsigned short int int16_t;
 
 	template <typename T>
 	class static_entry
@@ -19,6 +20,7 @@ namespace pq
 	struct poly_entry_descriptor
 	{
 		uint16_t size;
+		int16_t base_offset;
 	};
 
 	template <typename T>
@@ -76,9 +78,10 @@ namespace pq
 			at = start;
 		}
 
-		poly_entry_descriptor *d = reinterpret_cast<poly_entry_descriptor *>(at);
+		poly_entry_descriptor *const d = reinterpret_cast<poly_entry_descriptor *>(at);
 
-		new(d + 1) FinalT(value);
+		d->base_offset = static_cast<int16_t>(reinterpret_cast<byte *>(static_cast<T *>(new(d + 1) FinalT(value)))
+			- reinterpret_cast<byte *>(d + 1));
 		at += d->size = sizeof(poly_entry_descriptor) + sizeof(FinalT);
 	}
 
@@ -98,7 +101,7 @@ namespace pq
 	inline T &poly_entry<T>::get(uint8_t *at) throw()
 	{
 		poly_entry_descriptor *d = reinterpret_cast<poly_entry_descriptor *>(at);
-		return *reinterpret_cast<T *>(d + 1);
+		return *reinterpret_cast<T *>(reinterpret_cast<byte *>(d + 1) + d->base_offset);
 	}
 }
 

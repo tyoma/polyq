@@ -86,6 +86,34 @@ namespace pq
 			private:
 				int &_count;
 			};
+
+			struct POD
+			{
+				char padding[101];
+			};
+
+			class VPolyA
+			{
+				virtual string get_type2() const = 0;
+				int value;
+			};
+
+			class VPolyB
+			{
+			public:
+				virtual ~VPolyB() {	}
+				virtual string get_type2() const = 0;
+				string values[3];
+			};
+
+			class VDerived : public POD, public VPolyA, public VPolyB
+			{
+			public:
+				~VDerived()
+				{	}
+
+				virtual string get_type2() const { return "derived"; }
+			};
 		}
 
 		begin_test_suite( PolyEntryTests )
@@ -95,6 +123,10 @@ namespace pq
 
 			init( InitBufferAndBoundaries )
 			{
+				VDerived d;
+				VPolyB *pbase = &d;
+
+				assert_not_equal(static_cast<void *>(&d), static_cast<void *>(pbase));
 				assert_not_equal(sizeof(Bar), sizeof(Baz));
 				setup_buffer();
 			}
@@ -231,7 +263,7 @@ namespace pq
 				// INIT
 				int dummy = 0;
 
-				setup_buffer(100, 0xFF);
+				setup_buffer(3 * (sizeof(poly_entry_descriptor) + sizeof(Bar)), 0xFF);
 				p = end - (sizeof(poly_entry_descriptor) + sizeof(Bar) - 1);
 
 				// ACT
@@ -335,6 +367,26 @@ namespace pq
 				// ASSERT
 				assert_equal(1, count);
 				assert_equal(v2, v1);
+			}
+
+
+			test( GetWorksWellWhenBaseAndDerivedAreDisplaced )
+			{
+				// INIT
+				byte *v1 = p;
+				poly_entry<VPolyB>::create(p, begin, end, VDerived());
+				AUTO_DESTROY(VPolyB, v1, begin, end);
+				byte *v2 = p;
+				poly_entry<VPolyB>::create(p, begin, end, VDerived());
+				AUTO_DESTROY(VPolyB, v2, begin, end);
+				byte *v3 = p;
+				poly_entry<VPolyB>::create(p, begin, end, VDerived());
+				AUTO_DESTROY(VPolyB, v3, begin, end);
+
+				// ACT / ASSERT
+				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
+				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
+				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
 			}
 
 		end_test_suite
