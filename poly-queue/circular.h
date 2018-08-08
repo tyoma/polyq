@@ -38,7 +38,7 @@ namespace pq
 	template <typename T, typename EntryT>
 	inline circular_buffer<T, EntryT>::~circular_buffer()
 	{
-		while (_count--)
+		while (_count-- > 0)
 			entry_type::destroy(_read, _start, _end);
 		delete[] _start;
 	}
