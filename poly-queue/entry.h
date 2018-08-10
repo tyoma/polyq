@@ -12,8 +12,8 @@ namespace pq
 	{
 	public:
 		static void create(uint8_t *&at, uint8_t *start, uint8_t *end, const T &value);
-		static void destroy(uint8_t *&at, uint8_t *start, uint8_t *end) throw();
-		static T &get(uint8_t *at) throw();
+		static void destroy(uint8_t *&at) throw();
+		static T &get(uint8_t *&at, uint8_t *start, uint8_t *end) throw();
 	};
 
 
@@ -31,8 +31,8 @@ namespace pq
 		static void create(uint8_t *&at, uint8_t *start, uint8_t *end, const FinalT &value);
 		template <typename FinalT>
 		static void create(uint8_t *&at, uint8_t *start, uint8_t *end, FinalT &value);
-		static void destroy(uint8_t *&at, uint8_t *start, uint8_t *end) throw();
-		static T &get(uint8_t *at) throw();
+		static void destroy(uint8_t *&at) throw();
+		static T &get(uint8_t *&at, uint8_t *start, uint8_t *end) throw();
 
 	private:
 		template <typename FinalT>
@@ -55,18 +55,19 @@ namespace pq
 	}
 
 	template <typename T>
-	inline void static_entry<T>::destroy(uint8_t *&at, uint8_t *start, uint8_t *end) throw()
+	inline void static_entry<T>::destroy(uint8_t *&at) throw()
 	{
-		get(at).~T();
-		if (at + 2 * sizeof(T) > end)
-			at = start;
-		else
-			at += sizeof(T);
+		reinterpret_cast<T *>(at)->~T();
+		at += sizeof(T);
 	}
 
 	template <typename T>
-	inline T &static_entry<T>::get(uint8_t *at) throw()
-	{	return *reinterpret_cast<T *>(at);	}
+	inline T &static_entry<T>::get(uint8_t *&at, uint8_t *start, uint8_t *end) throw()
+	{
+		if (end - at < sizeof(T))
+			at = start;
+		return *reinterpret_cast<T *>(at);
+	}
 
 
 	template <typename T>
@@ -93,7 +94,7 @@ namespace pq
 
 	template <typename T>
 	template <typename FinalT>
-	static void poly_entry<T>::post_construct(uint8_t *&at, poly_entry_descriptor *d, const T *object)
+	inline void poly_entry<T>::post_construct(uint8_t *&at, poly_entry_descriptor *d, const T *object)
 	{
 		d->base_offset = static_cast<int16_t>(reinterpret_cast<const byte *>(object) - reinterpret_cast<byte *>(d + 1));
 		at += d->size = sizeof(poly_entry_descriptor) + sizeof(FinalT);
@@ -114,20 +115,20 @@ namespace pq
 #undef POLY_ENTRY_CREATE_DEF
 
 	template <typename T>
-	inline void poly_entry<T>::destroy(uint8_t *&at, uint8_t *start, uint8_t * end) throw()
+	inline void poly_entry<T>::destroy(uint8_t *&at) throw()
 	{
-		if (end - at < sizeof(poly_entry_descriptor) || !reinterpret_cast<const poly_entry_descriptor *>(at)->size)
-			at = start;
+		poly_entry_descriptor *d = reinterpret_cast<poly_entry_descriptor *>(at);
 
-		const poly_entry_descriptor *d = reinterpret_cast<const poly_entry_descriptor *>(at);
-
-		get(at).~T();
+		reinterpret_cast<T *>(reinterpret_cast<byte *>(d + 1) + d->base_offset)->~T();
 		at += d->size;
 	}
 
 	template <typename T>
-	inline T &poly_entry<T>::get(uint8_t *at) throw()
+	inline T &poly_entry<T>::get(uint8_t *&at, uint8_t *start, uint8_t *end) throw()
 	{
+		if (end - at < sizeof(poly_entry_descriptor) || !reinterpret_cast<const poly_entry_descriptor *>(at)->size)
+			at = start;
+
 		poly_entry_descriptor *d = reinterpret_cast<poly_entry_descriptor *>(at);
 		return *reinterpret_cast<T *>(reinterpret_cast<byte *>(d + 1) + d->base_offset);
 	}

@@ -14,7 +14,10 @@ public:
 	{	}
 
 	~destroyer()
-	{	pq::poly_entry<T>::destroy(_p, _begin, _end);	}
+	{
+		pq::poly_entry<T>::get(_p, _begin, _end); // Let _p wrap around when insufficient space is met.
+		pq::poly_entry<T>::destroy(_p);
+	}
 
 private:
 	pq::byte *_p, *_begin, *_end;
@@ -175,7 +178,7 @@ namespace pq
 				typedef pair<string, double> pair2_t;
 
 				// ACT
-				byte * const v1 = p;
+				byte *v1 = p;
 				poly_entry<pair1_t>::create(p, begin, end, pair1_t(171, "zee"));
 				AUTO_DESTROY(pair1_t, v1, begin, end);
 
@@ -183,11 +186,11 @@ namespace pq
 				assert_is_true(p > v1);
 
 				// ACT / ASSERT
-				assert_equal(171, poly_entry<pair1_t>::get(v1).first);
-				assert_equal("zee", poly_entry<pair1_t>::get(v1).second);
+				assert_equal(171, poly_entry<pair1_t>::get(v1, begin, end).first);
+				assert_equal("zee", poly_entry<pair1_t>::get(v1, begin, end).second);
 
 				// ACT
-				byte * const v2 = p;
+				byte *v2 = p;
 				poly_entry<pair2_t>::create(p, begin, end, pair2_t("Lorem ipsum", 3.14159));
 				AUTO_DESTROY(pair2_t, v2, begin, end);
 
@@ -195,8 +198,8 @@ namespace pq
 				assert_is_true(p > v2);
 
 				// ACT / ASSERT
-				assert_equal("Lorem ipsum", poly_entry<pair2_t>::get(v2).first);
-				assert_equal(3.14159, poly_entry<pair2_t>::get(v2).second);
+				assert_equal("Lorem ipsum", poly_entry<pair2_t>::get(v2, begin, end).first);
+				assert_equal(3.14159, poly_entry<pair2_t>::get(v2, begin, end).second);
 			}
 
 
@@ -206,30 +209,30 @@ namespace pq
 				int bars = 0, bazes = 0;
 
 				// ACT
-				byte * const v1 = p;
+				byte *v1 = p;
 				poly_entry<Foo>::create(p, begin, end, Bar("Tolstoy", bars));
 				AUTO_DESTROY(Foo, v1, begin, end);
-				byte * const v2 = p;
+				byte *v2 = p;
 				poly_entry<Foo>::create(p, begin, end, Bar("Chekhov", bars));
 				AUTO_DESTROY(Foo, v2, begin, end);
-				byte * const v3 = p;
+				byte *v3 = p;
 				poly_entry<Foo>::create(p, begin, end, Baz(13, bazes));
 				AUTO_DESTROY(Foo, v3, begin, end);
-				byte * const v4 = p;
+				byte *v4 = p;
 				poly_entry<Foo>::create(p, begin, end, Bar("Brodsky", bars));
 				AUTO_DESTROY(Foo, v4, begin, end);
 
 				// ACT / ASSERT
 				assert_equal(3, bars);
 				assert_equal(1, bazes);
-				assert_equal("Bar", poly_entry<Foo>::get(v1).get_type());
-				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(v1)).value);
-				assert_equal("Bar", poly_entry<Foo>::get(v2).get_type());
-				assert_equal("Chekhov", static_cast<Bar&>(poly_entry<Foo>::get(v2)).value);
-				assert_equal("Baz", poly_entry<Foo>::get(v3).get_type());
-				assert_equal(13, static_cast<Baz&>(poly_entry<Foo>::get(v3)).value);
-				assert_equal("Bar", poly_entry<Foo>::get(v4).get_type());
-				assert_equal("Brodsky", static_cast<Bar&>(poly_entry<Foo>::get(v4)).value);
+				assert_equal("Bar", poly_entry<Foo>::get(v1, begin, end).get_type());
+				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(v1, begin, end)).value);
+				assert_equal("Bar", poly_entry<Foo>::get(v2, begin, end).get_type());
+				assert_equal("Chekhov", static_cast<Bar&>(poly_entry<Foo>::get(v2, begin, end)).value);
+				assert_equal("Baz", poly_entry<Foo>::get(v3, begin, end).get_type());
+				assert_equal(13, static_cast<Baz&>(poly_entry<Foo>::get(v3, begin, end)).value);
+				assert_equal("Bar", poly_entry<Foo>::get(v4, begin, end).get_type());
+				assert_equal("Brodsky", static_cast<Bar&>(poly_entry<Foo>::get(v4, begin, end)).value);
 			}
 
 
@@ -249,7 +252,7 @@ namespace pq
 
 				// ACT
 				p = v3;
-				poly_entry<Foo>::destroy(p, begin, end);
+				poly_entry<Foo>::destroy(p);
 
 				// ACT / ASSERT
 				assert_equal(3, bars);
@@ -258,8 +261,8 @@ namespace pq
 
 				// ACT
 				p = v1;
-				poly_entry<Foo>::destroy(p, begin, end);
-				poly_entry<Foo>::destroy(p, begin, end);
+				poly_entry<Foo>::destroy(p);
+				poly_entry<Foo>::destroy(p);
 
 				// ACT / ASSERT
 				assert_equal(1, bars);
@@ -282,8 +285,8 @@ namespace pq
 				// ACT / ASSERT
 				assert_is_true(p > begin);
 				assert_is_true(p < end);
-				assert_equal("Bar", poly_entry<Foo>::get(begin).get_type());
-				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(begin)).value);
+				assert_equal("Bar", poly_entry<Foo>::get(begin, begin, end).get_type());
+				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(begin, begin, end)).value);
 			}
 
 
@@ -307,8 +310,8 @@ namespace pq
 				assert_is_true(p < end);
 				assert_equal(0, d->size);
 				assert_equal(0xFF, *(terminator + sizeof(poly_entry_descriptor)));
-				assert_equal("Bar", poly_entry<Foo>::get(begin).get_type());
-				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(begin)).value);
+				assert_equal("Bar", poly_entry<Foo>::get(begin, begin, end).get_type());
+				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(begin, begin, end)).value);
 			}
 
 
@@ -332,8 +335,8 @@ namespace pq
 				assert_is_true(p < end);
 				assert_equal(0, d->size);
 				assert_equal(0xFF, *(terminator + sizeof(poly_entry_descriptor)));
-				assert_equal("Baz", poly_entry<Foo>::get(begin).get_type());
-				assert_equal(19, static_cast<Baz&>(poly_entry<Foo>::get(begin)).value);
+				assert_equal("Baz", poly_entry<Foo>::get(begin, begin, end).get_type());
+				assert_equal(19, static_cast<Baz&>(poly_entry<Foo>::get(begin, begin, end)).value);
 			}
 
 
@@ -356,46 +359,67 @@ namespace pq
 				assert_is_true(p > begin);
 				assert_is_true(p < end);
 				assert_equal(0, d->size);
-				assert_equal("Bar", poly_entry<Foo>::get(begin).get_type());
-				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(begin)).value);
+				assert_equal("Bar", poly_entry<Foo>::get(begin, begin, end).get_type());
+				assert_equal("Tolstoy", static_cast<Bar&>(poly_entry<Foo>::get(begin, begin, end)).value);
 			}
 
 
-			test( ElementIsDestroyedAtBeginingIfDescriptorCannotBeReadInTheEndOfBuffer )
+			test( ElementIsReadAtTheBeginingIfInsufficientSpaceForDescriptorToRead )
 			{
 				// INIT
 				int count = 0;
-				byte *v1 = p = end - (sizeof(poly_entry_descriptor) - 1);
+				byte *v1 = end - (sizeof(poly_entry_descriptor) - 1);
 
 				poly_entry<Foo>::create(p, begin, end, Bar("Tolstoy", count));
-				byte *v2 = p;
-				poly_entry<Foo>::create(p, begin, end, Bar("Khlebnikov", count));
+				AUTO_DESTROY(Foo, begin, begin, end);
 
 				// ACT
-				poly_entry<Foo>::destroy(v1, begin, end);
+				Foo &object = poly_entry<Foo>::get(v1, begin, end);
 
 				// ASSERT
-				assert_equal(1, count);
-				assert_equal(v2, v1);
+				assert_equal(begin, v1);
+				assert_equal("Bar", object.get_type());
+				assert_equal("Tolstoy", static_cast<Bar&>(object).value);
 			}
 
 
-			test( ElementIsDestroyedAtBeginingIfTerminatorIsFound )
+			test( ElementIsReadAtTheBeginingIfNoSpaceForDescriptorToRead )
 			{
 				// INIT
 				int count = 0;
-				byte *v1 = p = end - (sizeof(poly_entry_descriptor));
+				byte *v1 = end;
 
-				poly_entry<Foo>::create(p, begin, end, Bar("Tolstoy", count));
-				byte *v2 = p;
-				poly_entry<Foo>::create(p, begin, end, Bar("Khlebnikov", count));
+				poly_entry<Foo>::create(p, begin, end, Baz(1984, count));
+				AUTO_DESTROY(Foo, begin, begin, end);
 
 				// ACT
-				poly_entry<Foo>::destroy(v1, begin, end);
+				Foo &object = poly_entry<Foo>::get(v1, begin, end);
 
 				// ASSERT
-				assert_equal(1, count);
-				assert_equal(v2, v1);
+				assert_equal(begin, v1);
+				assert_equal("Baz", object.get_type());
+				assert_equal(1984, static_cast<Baz&>(object).value);
+			}
+
+
+			test( ElementIsReadAtTheBeginingIfTerminatorIsMet )
+			{
+				// INIT
+				int count = 0;
+				poly_entry_descriptor zero = { };
+				byte *v1 = end - (sizeof(poly_entry_descriptor));
+
+				*reinterpret_cast<poly_entry_descriptor *>(v1) = zero;
+				poly_entry<Foo>::create(p, begin, end, Bar("Tolstoy", count));
+				AUTO_DESTROY(Foo, begin, begin, end);
+
+				// ACT
+				Foo &object = poly_entry<Foo>::get(v1, begin, end);
+
+				// ASSERT
+				assert_equal(begin, v1);
+				assert_equal("Bar", object.get_type());
+				assert_equal("Tolstoy", static_cast<Bar&>(object).value);
 			}
 
 
@@ -413,9 +437,9 @@ namespace pq
 				AUTO_DESTROY(VPolyB, v3, begin, end);
 
 				// ACT / ASSERT
-				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
-				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
-				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
+				assert_equal("derived", poly_entry<VPolyB>::get(v1, begin, end).get_type2());
+				assert_equal("derived", poly_entry<VPolyB>::get(v2, begin, end).get_type2());
+				assert_equal("derived", poly_entry<VPolyB>::get(v3, begin, end).get_type2());
 			}
 
 
@@ -437,10 +461,10 @@ namespace pq
 				assert_equal(4, n);
 				assert_equal(-1, o1.value);
 				assert_equal(-1, o2.value);
-				assert_equal("BazNC", poly_entry<Foo>::get(v1).get_type());
-				assert_equal(123, static_cast<BazNC &>(poly_entry<Foo>::get(v1)).value);
-				assert_equal("BazNC", poly_entry<Foo>::get(v2).get_type());
-				assert_equal(1311, static_cast<BazNC &>(poly_entry<Foo>::get(v2)).value);
+				assert_equal("BazNC", poly_entry<Foo>::get(v1, begin, end).get_type());
+				assert_equal(123, static_cast<BazNC &>(poly_entry<Foo>::get(v1, begin, end)).value);
+				assert_equal("BazNC", poly_entry<Foo>::get(v2, begin, end).get_type());
+				assert_equal(1311, static_cast<BazNC &>(poly_entry<Foo>::get(v2, begin, end)).value);
 			}
 
 
@@ -457,14 +481,14 @@ namespace pq
 				poly_entry<Foo>::create(p, begin, end, o2);
 
 				// ACT
-				poly_entry<Foo>::destroy(v1, begin, end);
+				poly_entry<Foo>::destroy(v1);
 
 				// ASSERT
 				assert_equal(v2, v1);
 				assert_equal(3, n);
 
 				// ACT
-				poly_entry<Foo>::destroy(v2, begin, end);
+				poly_entry<Foo>::destroy(v2);
 
 				// ASSERT
 				assert_equal(p, v2);

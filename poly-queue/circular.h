@@ -42,7 +42,10 @@ namespace pq
 	inline circular_buffer<T, EntryT>::~circular_buffer()
 	{
 		while (_count-- > 0)
-			entry_type::destroy(_read, _start, _end);
+		{
+			entry_type::get(_read, _start, _end);
+			entry_type::destroy(_read);
+		}
 		delete[] _start;
 	}
 
@@ -66,8 +69,8 @@ namespace pq
 	{
 		if (!preconsume(_count.fetch_sub(1, std::memory_order_acquire)))
 			return _count.fetch_add(1, std::memory_order_release), false;
-		consumer(entry_type::get(_read));
-		entry_type::destroy(_read, _start, _end);
+		consumer(entry_type::get(_read, _start, _end));
+		entry_type::destroy(_read);
 		return true;
 	}
 }
