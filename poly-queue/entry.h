@@ -29,8 +29,17 @@ namespace pq
 	public:
 		template <typename FinalT>
 		static void create(uint8_t *&at, uint8_t *start, uint8_t *end, const FinalT &value);
+		template <typename FinalT>
+		static void create(uint8_t *&at, uint8_t *start, uint8_t *end, FinalT &value);
 		static void destroy(uint8_t *&at, uint8_t *start, uint8_t *end) throw();
 		static T &get(uint8_t *at) throw();
+
+	private:
+		template <typename FinalT>
+		static poly_entry_descriptor *prepare_slot(uint8_t *&at, uint8_t *start, uint8_t *end, const FinalT &value);
+
+		template <typename FinalT>
+		static void post_construct(uint8_t *&at, poly_entry_descriptor *d, const T *object);
 	};
 
 
@@ -62,7 +71,8 @@ namespace pq
 
 	template <typename T>
 	template <typename FinalT>
-	inline void poly_entry<T>::create(uint8_t *&at, uint8_t *start, uint8_t *end, const FinalT &value)
+	inline poly_entry_descriptor *poly_entry<T>::prepare_slot(uint8_t *&at, uint8_t *start, uint8_t *end,
+		const FinalT &value)
 	{
 		struct type_check_t { type_check_t(const T *) {	} } type_check(&value);
 
@@ -73,17 +83,35 @@ namespace pq
 		else if (end - at < sizeof(poly_entry_descriptor) + sizeof(FinalT))
 		{
 			const poly_entry_descriptor zero = {};
-			
+
 			*reinterpret_cast<poly_entry_descriptor *>(at) = zero;
 			at = start;
 		}
 
-		poly_entry_descriptor *const d = reinterpret_cast<poly_entry_descriptor *>(at);
+		return reinterpret_cast<poly_entry_descriptor *>(at);
+	}
 
-		d->base_offset = static_cast<int16_t>(reinterpret_cast<byte *>(static_cast<T *>(new(d + 1) FinalT(value)))
-			- reinterpret_cast<byte *>(d + 1));
+	template <typename T>
+	template <typename FinalT>
+	static void poly_entry<T>::post_construct(uint8_t *&at, poly_entry_descriptor *d, const T *object)
+	{
+		d->base_offset = static_cast<int16_t>(reinterpret_cast<const byte *>(object) - reinterpret_cast<byte *>(d + 1));
 		at += d->size = sizeof(poly_entry_descriptor) + sizeof(FinalT);
 	}
+
+#define POLY_ENTRY_CREATE_DEF(cv)\
+	template <typename T>\
+	template <typename FinalT>\
+	inline void poly_entry<T>::create(uint8_t *&at, uint8_t *start, uint8_t *end, FinalT cv value)\
+	{\
+		poly_entry_descriptor *d = prepare_slot(at, start, end, value);\
+		post_construct<FinalT>(at, d, new(d + 1) FinalT(value));\
+	}
+
+	POLY_ENTRY_CREATE_DEF(const &);
+	POLY_ENTRY_CREATE_DEF(&);
+
+#undef POLY_ENTRY_CREATE_DEF
 
 	template <typename T>
 	inline void poly_entry<T>::destroy(uint8_t *&at, uint8_t *start, uint8_t * end) throw()
@@ -104,4 +132,3 @@ namespace pq
 		return *reinterpret_cast<T *>(reinterpret_cast<byte *>(d + 1) + d->base_offset);
 	}
 }
-

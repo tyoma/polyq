@@ -114,6 +114,35 @@ namespace pq
 
 				virtual string get_type2() const { return "derived"; }
 			};
+
+
+			class BazNC : public Foo
+			{
+			public:
+				BazNC(int value_, int &count)
+					: value(value_), _count(count)
+				{	++_count;	}
+
+				BazNC(BazNC &other)
+					: value(other.value), _count(other._count)
+				{
+					++_count;
+					other.value = -1;
+				}
+
+				~BazNC()
+				{	--_count;	}
+
+			public:
+				int value;
+
+			private:
+				virtual string get_type() const
+				{	return "BazNC";	}
+
+			private:
+				int &_count;
+			};
 		}
 
 		begin_test_suite( PolyEntryTests )
@@ -387,6 +416,59 @@ namespace pq
 				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
 				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
 				assert_equal("derived", poly_entry<VPolyB>::get(v1).get_type2());
+			}
+
+
+			test( NonConstantReferenceCanBePassedToConstructAnEntry )
+			{
+				// INIT
+				int n = 0;
+				BazNC o1(123, n), o2(1311, n);
+
+				// ACT
+				byte *v1 = p;
+				poly_entry<Foo>::create(p, begin, end, o1);
+				AUTO_DESTROY(Foo, v1, begin, end);
+				byte *v2 = p;
+				poly_entry<Foo>::create(p, begin, end, o2);
+				AUTO_DESTROY(Foo, v2, begin, end);
+
+				// ASSERT
+				assert_equal(4, n);
+				assert_equal(-1, o1.value);
+				assert_equal(-1, o2.value);
+				assert_equal("BazNC", poly_entry<Foo>::get(v1).get_type());
+				assert_equal(123, static_cast<BazNC &>(poly_entry<Foo>::get(v1)).value);
+				assert_equal("BazNC", poly_entry<Foo>::get(v2).get_type());
+				assert_equal(1311, static_cast<BazNC &>(poly_entry<Foo>::get(v2)).value);
+			}
+
+
+			test( CopyConstructedObjectsFromNonConstRefAreHeldInTheSameWayAsConstConstructed )
+			{
+				// INIT
+				int n = 0;
+				BazNC o1(123, n), o2(1311, n);
+
+				// INIT / ACT
+				byte *v1 = p;
+				poly_entry<Foo>::create(p, begin, end, o1);
+				byte *v2 = p;
+				poly_entry<Foo>::create(p, begin, end, o2);
+
+				// ACT
+				poly_entry<Foo>::destroy(v1, begin, end);
+
+				// ASSERT
+				assert_equal(v2, v1);
+				assert_equal(3, n);
+
+				// ACT
+				poly_entry<Foo>::destroy(v2, begin, end);
+
+				// ASSERT
+				assert_equal(p, v2);
+				assert_equal(2, n);
 			}
 
 		end_test_suite

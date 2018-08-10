@@ -20,6 +20,9 @@ namespace pq
 		template <typename FinalT, typename PostProduceFn>
 		void produce(const FinalT &value, const PostProduceFn &postproduce);
 
+		template <typename FinalT, typename PostProduceFn>
+		void produce(FinalT &value, const PostProduceFn &postproduce);
+
 		template <typename ConsumerFn, typename PreConsumeFn>
 		bool consume(const ConsumerFn &consumer, const PreConsumeFn &preconsume);
 
@@ -43,13 +46,19 @@ namespace pq
 		delete[] _start;
 	}
 
-	template <typename T, typename EntryT>
-	template <typename FinalT, typename PostProduceFn>
-	inline void circular_buffer<T, EntryT>::produce(const FinalT &value, const PostProduceFn &postproduce)
-	{
-		entry_type::create(_write, _start, _end, value);
-		postproduce(_count.fetch_add(1, std::memory_order_release) + 1);
+#define CIRCULAR_BUFFER_PRODUCE_DEF(cv)\
+	template <typename T, typename EntryT>\
+	template <typename FinalT, typename PostProduceFn>\
+	inline void circular_buffer<T, EntryT>::produce(FinalT cv value, const PostProduceFn &postproduce)\
+	{\
+		entry_type::create(_write, _start, _end, value);\
+		postproduce(_count.fetch_add(1, std::memory_order_release) + 1);\
 	}
+
+	CIRCULAR_BUFFER_PRODUCE_DEF(const &);
+	CIRCULAR_BUFFER_PRODUCE_DEF(&);
+
+#undef CIRCULAR_BUFFER_PRODUCE_DEF
 
 	template <typename T, typename EntryT>
 	template <typename ConsumerFn, typename PreConsumeFn>

@@ -51,6 +51,19 @@ namespace pq
 				T _value;
 			};
 
+			template <typename T, uint16_t N>
+			class PolyDerivedNC : public PolyDerived<T, N>
+			{
+			public:
+				PolyDerivedNC(const T &value)
+					: PolyDerived<T, N>(value)
+				{	}
+
+				PolyDerivedNC(PolyDerivedNC &other)
+					: PolyDerived<T, N>(other)
+				{	}
+			};
+
 			class TrackedCopies
 			{
 			public:
@@ -144,8 +157,32 @@ namespace pq
 			};
 
 			template <typename FinalT>
+			class consuming_asserter_nc
+			{
+			public:
+				consuming_asserter_nc(FinalT &reference)
+					: _reference(reference)
+				{	}
+
+				consuming_asserter_nc(const consuming_asserter_nc &other)
+					: _reference(other._reference)
+				{	}
+
+				template <typename BaseT>
+				void operator ()(const BaseT &value) const
+				{	assert_equal(_reference, static_cast<const FinalT&>(value));	}
+
+			private:
+				mutable FinalT _reference;
+			};
+
+			template <typename FinalT>
 			consuming_asserter<FinalT> assert_value(const FinalT &reference)
 			{	return consuming_asserter<FinalT>(reference);	}
+
+			template <typename FinalT>
+			consuming_asserter_nc<FinalT> assert_value_nc(FinalT &reference)
+			{	return consuming_asserter_nc<FinalT>(reference);	}
 
 			template <typename T>
 			void failing_consume(T &/*value*/)
@@ -561,6 +598,30 @@ namespace pq
 				buffer.consume(assert_value(PolyDerived<int, 15>(2)), preconsume(n, true));
 				buffer.consume(assert_value(PolyDerived<double, 23>(3.0)), preconsume(n, true));
 				buffer.consume(assert_value(PolyDerived<char, 7>(4)), preconsume(n, true));
+			}
+
+
+			test( NonConstReferenceCanBeUsedToProduceAnObject )
+			{
+				// INIT
+				int n;
+				circular_buffer< PolyBase, poly_entry<PolyBase> > buffer;
+				PolyDerivedNC<string, 5> v1("one");
+				PolyDerivedNC<int, 15> v2(2);
+				PolyDerivedNC<double, 23> v3(3.0);
+				PolyDerivedNC<char, 7> v4(4);
+
+				// ACT
+				buffer.produce(v1, postproduce(n));
+				buffer.produce(v2, postproduce(n));
+				buffer.produce(v3, postproduce(n));
+				buffer.produce(v4, postproduce(n));
+
+				// ACT / ASSERT
+				buffer.consume(assert_value_nc(v1), preconsume(n, true));
+				buffer.consume(assert_value_nc(v2), preconsume(n, true));
+				buffer.consume(assert_value_nc(v3), preconsume(n, true));
+				buffer.consume(assert_value_nc(v4), preconsume(n, true));
 			}
 
 		end_test_suite
