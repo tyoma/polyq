@@ -39,11 +39,13 @@
     <ClCompile Include="CircularBufferTests.cpp" />
     <ClCompile Include="PolyEntryTests.cpp" />
     <ClCompile Include="QueueTests.cpp" />
+    <ClCompile Include="StaticEntryTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\polyq\circular.h" />
     <ClInclude Include="..\polyq\entry.h" />
     <ClInclude Include="..\polyq\queue.h" />
+    <ClInclude Include="..\polyq\static_entry.h" />
     <ClInclude Include="helpers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

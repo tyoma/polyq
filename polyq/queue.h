@@ -1,6 +1,7 @@
 #pragma once
 
 #include "circular.h"
+#include "entry.h"
 
 namespace polyq
 {

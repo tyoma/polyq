@@ -1,5 +1,8 @@
 #include <polyq/circular.h>
 
+#include <polyq/static_entry.h>
+#include <polyq/entry.h>
+
 #include "helpers.h"
 
 #include <ut/assert.h>
@@ -13,6 +16,8 @@ namespace polyq
 	{
 		namespace
 		{
+			typedef unsigned short uint16_t;
+
 			struct Foo
 			{
 				Foo(int x)
@@ -174,8 +179,8 @@ namespace polyq
 			{
 				// INIT
 				int n = 1110;
-				circular_buffer<int> b1;
-				circular_buffer<Foo> b2;
+				circular_buffer< int, static_entry<int> > b1;
+				circular_buffer< Foo, static_entry<Foo> > b2;
 
 				// ACT / ASSERT
 				assert_is_false(b1.consume(&failing_consume<int>, preconsume(n, false)));
@@ -199,7 +204,7 @@ namespace polyq
 				// INIT
 				int n;
 				vector<int> log;
-				circular_buffer<int> b;
+				circular_buffer< int, static_entry<int> > b;
 
 				b.consume(consumer<int>(log), preconsume(n, false));
 				n = 1000;
@@ -218,8 +223,8 @@ namespace polyq
 				int n[] = { 1, 1, 1, 1, };
 				vector<int> log1;
 				vector<Foo> log2;
-				circular_buffer<int> b1, b2;
-				circular_buffer<Foo> b3, b4;
+				circular_buffer< int, static_entry<int> > b1, b2;
+				circular_buffer< Foo, static_entry<Foo> > b3, b4;
 
 				// ACT
 				b1.produce(17, postproduce(n[0]));
@@ -265,7 +270,7 @@ namespace polyq
 
 			struct preconsume_check_zero : nonassignable
 			{
-				preconsume_check_zero(circular_buffer<int> &buffer_)
+				preconsume_check_zero(circular_buffer< int, static_entry<int> > &buffer_)
 					: buffer(buffer_)
 				{	}
 
@@ -278,13 +283,13 @@ namespace polyq
 					return true;
 				}
 
-				circular_buffer<int> &buffer;
+				circular_buffer< int, static_entry<int> > &buffer;
 			};
 
 			test( ProducingAnElementWhileConsumerIsWaitingGivesZeroElementsToPostproduce )
 			{
 				// INIT
-				circular_buffer<int> buffer;
+				circular_buffer< int, static_entry<int> > buffer;
 				preconsume_check_zero pc(buffer);
 				vector<int> log;
 
@@ -300,7 +305,7 @@ namespace polyq
 
 			struct postproduce_check_presence : nonassignable
 			{
-				postproduce_check_presence(circular_buffer<int> &buffer_)
+				postproduce_check_presence(circular_buffer< int, static_entry<int> > &buffer_)
 					: buffer(buffer_)
 				{	}
 
@@ -315,13 +320,13 @@ namespace polyq
 					assert_equal(reference, log);
 				}
 
-				circular_buffer<int> &buffer;
+				circular_buffer< int, static_entry<int> > &buffer;
 			};
 
 			test( PostProduceIsCalledWhenElementHasAlreadyBeenPut )
 			{
 				// INIT
-				circular_buffer<int> buffer;
+				circular_buffer< int, static_entry<int> > buffer;
 				postproduce_check_presence pp(buffer);
 
 				// ACT / ASSERT
@@ -333,8 +338,8 @@ namespace polyq
 			{
 				// INIT
 				int n[2];
-				circular_buffer<double> buffer1;
-				circular_buffer<Foo> buffer2;
+				circular_buffer< double, static_entry<double> > buffer1;
+				circular_buffer< Foo, static_entry<Foo> > buffer2;
 				vector<double> log1;
 				vector<Foo> log2;
 
@@ -381,8 +386,8 @@ namespace polyq
 			{
 				// INIT
 				int n;
-				circular_buffer< double, static_entry<double> > buffer1(5 * sizeof(double));
-				circular_buffer< char, static_entry<char> > buffer2(3 * sizeof(char));
+				circular_buffer< double, static_entry<double> > buffer1(5);
+				circular_buffer< char, static_entry<char> > buffer2(3);
 				vector<double> log1;
 				vector<char> log2;
 				vector<double *> plog1;
@@ -432,7 +437,7 @@ namespace polyq
 			{
 				// INIT
 				int n;
-				circular_buffer< double, static_entry<double> > buffer(5 * sizeof(double) - 1);
+				circular_buffer< double, poly_entry<double> > buffer(5 * (sizeof(double) + sizeof(poly_entry_descriptor)) - 1);
 				vector<double> log;
 				vector<double *> plog;
 
@@ -465,7 +470,7 @@ namespace polyq
 			{
 				// INIT
 				int n, copies = 0;
-				circular_buffer<instance_counter> buffer;
+				circular_buffer< instance_counter, static_entry<instance_counter> > buffer;
 
 				// ACT
 				buffer.produce(instance_counter(copies), postproduce(n));
@@ -488,7 +493,7 @@ namespace polyq
 			{
 				// INIT
 				int n, copies = 0;
-				circular_buffer<instance_counter> buffer;
+				circular_buffer< instance_counter, static_entry<instance_counter> > buffer;
 
 				buffer.produce(instance_counter(copies), postproduce(n));
 				buffer.produce(instance_counter(copies), postproduce(n));
@@ -517,8 +522,8 @@ namespace polyq
 			{
 				// INIT
 				int n, copies1 = 0, copies2 = 0;
-				unique_ptr< circular_buffer<instance_counter> > buffer1(new circular_buffer<instance_counter>);
-				unique_ptr< circular_buffer<instance_counter> > buffer2(new circular_buffer<instance_counter>);
+				unique_ptr< circular_buffer< instance_counter, static_entry<instance_counter> > > buffer1(new circular_buffer< instance_counter, static_entry<instance_counter> >);
+				unique_ptr< circular_buffer< instance_counter, static_entry<instance_counter> > > buffer2(new circular_buffer< instance_counter, static_entry<instance_counter> >);
 
 				buffer1->produce(move(instance_counter(copies1)), postproduce(n));
 				buffer1->produce(move(instance_counter(copies1)), postproduce(n));
@@ -546,7 +551,7 @@ namespace polyq
 			{
 				// INIT
 				int n, copies = 0;
-				unique_ptr< circular_buffer<instance_counter> > buffer(new circular_buffer<instance_counter>(5 * sizeof(instance_counter)));
+				unique_ptr< circular_buffer< instance_counter, static_entry<instance_counter> > > buffer(new circular_buffer< instance_counter, static_entry<instance_counter> >(5 * sizeof(instance_counter)));
 
 				buffer->produce(instance_counter(copies), postproduce(n));
 				buffer->produce(instance_counter(copies), postproduce(n));
@@ -612,7 +617,7 @@ namespace polyq
 			{
 				// INIT
 				int n, m = 0;
-				circular_buffer<instance_counter> buffer;
+				circular_buffer< instance_counter, static_entry<instance_counter> > buffer;
 				instance_counter v(m);
 
 				// ACT

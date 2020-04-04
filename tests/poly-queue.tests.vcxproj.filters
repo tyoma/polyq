@@ -4,18 +4,22 @@
     <ClCompile Include="QueueTests.cpp" />
     <ClCompile Include="CircularBufferTests.cpp" />
     <ClCompile Include="PolyEntryTests.cpp" />
+    <ClCompile Include="StaticEntryTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\polyq\circular.h">
-      <Filter>poly-queue</Filter>
-    </ClInclude>
-    <ClInclude Include="..\polyq\entry.h">
       <Filter>poly-queue</Filter>
     </ClInclude>
     <ClInclude Include="..\polyq\queue.h">
       <Filter>poly-queue</Filter>
     </ClInclude>
     <ClInclude Include="helpers.h" />
+    <ClInclude Include="..\polyq\static_entry.h">
+      <Filter>poly-queue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\polyq\entry.h">
+      <Filter>poly-queue</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="poly-queue">
