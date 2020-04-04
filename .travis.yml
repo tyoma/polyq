@@ -8,5 +8,5 @@ script:
  - mkdir _build
  - cd _build
  - cmake ..
- - make
- - bin/utee-runner bin/libpoly-queue.tests.so
+ - make -j
+ - _bin/utee-runner _bin/*tests*

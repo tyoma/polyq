@@ -1,11 +1,13 @@
-#include <poly-queue/circular.h>
+#include <polyq/circular.h>
+
+#include "helpers.h"
 
 #include <ut/assert.h>
 #include <ut/test.h>
 
 using namespace std;
 
-namespace pq
+namespace polyq
 {
 	namespace tests
 	{
@@ -59,30 +61,12 @@ namespace pq
 					: PolyDerived<T, N>(value)
 				{	}
 
-				PolyDerivedNC(PolyDerivedNC &other)
+				PolyDerivedNC(PolyDerivedNC &&other)
 					: PolyDerived<T, N>(other)
 				{	}
 			};
 
-			class TrackedCopies
-			{
-			public:
-				TrackedCopies(int &n)
-					: _n(n)
-				{	++_n;	}
-
-				TrackedCopies(const TrackedCopies &other)
-					: _n(other._n)
-				{	++_n;	}
-
-				~TrackedCopies()
-				{	--_n;	}
-
-			private:
-				int &_n;
-			};
-
-			class preconsume
+			class preconsume : nonassignable
 			{
 			public:
 				preconsume(int &n, bool result)
@@ -93,14 +77,11 @@ namespace pq
 				{	return _n = n, _result;	}
 
 			private:
-				const preconsume &operator =(const preconsume &rhs);
-
-			private:
 				int &_n;
 				bool _result;
 			};
 
-			class postproduce
+			class postproduce : nonassignable
 			{
 			public:
 				postproduce(int &n)
@@ -111,14 +92,11 @@ namespace pq
 				{	_n = n;	}
 
 			private:
-				const postproduce &operator =(const postproduce &rhs);
-
-			private:
 				int &_n;
 			};
 
 			template <typename T>
-			class consumer
+			class consumer : nonassignable
 			{
 			public:
 				consumer(vector<T> &log, vector<T *> *plog = 0)
@@ -131,9 +109,6 @@ namespace pq
 					if (_plog)
 						_plog->push_back(&value);
 				}
-
-			private:
-				const consumer &operator =(const consumer &rhs);
 
 			private:
 				vector<T> &_log;
@@ -160,12 +135,12 @@ namespace pq
 			class consuming_asserter_nc
 			{
 			public:
-				consuming_asserter_nc(FinalT &reference)
-					: _reference(reference)
+				consuming_asserter_nc(FinalT &&reference)
+					: _reference(move(reference))
 				{	}
 
-				consuming_asserter_nc(const consuming_asserter_nc &other)
-					: _reference(other._reference)
+				consuming_asserter_nc(const consuming_asserter_nc &&other)
+					: _reference(move(other._reference))
 				{	}
 
 				template <typename BaseT>
@@ -181,8 +156,8 @@ namespace pq
 			{	return consuming_asserter<FinalT>(reference);	}
 
 			template <typename FinalT>
-			consuming_asserter_nc<FinalT> assert_value_nc(FinalT &reference)
-			{	return consuming_asserter_nc<FinalT>(reference);	}
+			consuming_asserter_nc<FinalT> assert_value_nc(FinalT &&reference)
+			{	return consuming_asserter_nc<FinalT>(move(reference));	}
 
 			template <typename T>
 			void failing_consume(T &/*value*/)
@@ -288,8 +263,12 @@ namespace pq
 			}
 
 
-			struct preconsume_check_zero
+			struct preconsume_check_zero : nonassignable
 			{
+				preconsume_check_zero(circular_buffer<int> &buffer_)
+					: buffer(buffer_)
+				{	}
+
 				bool operator ()(int) const
 				{
 					int n = 11;
@@ -306,7 +285,7 @@ namespace pq
 			{
 				// INIT
 				circular_buffer<int> buffer;
-				preconsume_check_zero pc = { buffer };
+				preconsume_check_zero pc(buffer);
 				vector<int> log;
 
 				// ACT / ASSERT
@@ -319,8 +298,12 @@ namespace pq
 			}
 
 
-			struct postproduce_check_presence
+			struct postproduce_check_presence : nonassignable
 			{
+				postproduce_check_presence(circular_buffer<int> &buffer_)
+					: buffer(buffer_)
+				{	}
+
 				void operator ()(int) const
 				{
 					int n = 11;
@@ -339,7 +322,7 @@ namespace pq
 			{
 				// INIT
 				circular_buffer<int> buffer;
-				postproduce_check_presence pp = { buffer };
+				postproduce_check_presence pp(buffer);
 
 				// ACT / ASSERT
 				buffer.produce(13222, pp);
@@ -482,19 +465,19 @@ namespace pq
 			{
 				// INIT
 				int n, copies = 0;
-				circular_buffer<TrackedCopies> buffer;
+				circular_buffer<instance_counter> buffer;
 
 				// ACT
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
 
 				// ASSERT
 				assert_equal(2, copies);
 
 				// ACT
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
 
 				// ASSERT
 				assert_equal(5, copies);
@@ -505,25 +488,25 @@ namespace pq
 			{
 				// INIT
 				int n, copies = 0;
-				circular_buffer<TrackedCopies> buffer;
+				circular_buffer<instance_counter> buffer;
 
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
-				buffer.produce(TrackedCopies(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
+				buffer.produce(instance_counter(copies), postproduce(n));
 
 				// ACT
-				buffer.consume(&dummy_consume<TrackedCopies>, preconsume(n, true));
+				buffer.consume(&dummy_consume<instance_counter>, preconsume(n, true));
 
 				// ASSERT
 				assert_equal(4, copies);
 
 				// ACT
-				buffer.consume(&dummy_consume<TrackedCopies>, preconsume(n, true));
-				buffer.consume(&dummy_consume<TrackedCopies>, preconsume(n, true));
-				buffer.consume(&dummy_consume<TrackedCopies>, preconsume(n, true));
-				buffer.consume(&dummy_consume<TrackedCopies>, preconsume(n, true));
+				buffer.consume(&dummy_consume<instance_counter>, preconsume(n, true));
+				buffer.consume(&dummy_consume<instance_counter>, preconsume(n, true));
+				buffer.consume(&dummy_consume<instance_counter>, preconsume(n, true));
+				buffer.consume(&dummy_consume<instance_counter>, preconsume(n, true));
 
 				// ASSERT
 				assert_equal(0, copies);
@@ -534,14 +517,14 @@ namespace pq
 			{
 				// INIT
 				int n, copies1 = 0, copies2 = 0;
-				auto_ptr< circular_buffer<TrackedCopies> > buffer1(new circular_buffer<TrackedCopies>);
-				auto_ptr< circular_buffer<TrackedCopies> > buffer2(new circular_buffer<TrackedCopies>);
+				unique_ptr< circular_buffer<instance_counter> > buffer1(new circular_buffer<instance_counter>);
+				unique_ptr< circular_buffer<instance_counter> > buffer2(new circular_buffer<instance_counter>);
 
-				buffer1->produce(TrackedCopies(copies1), postproduce(n));
-				buffer1->produce(TrackedCopies(copies1), postproduce(n));
-				buffer2->produce(TrackedCopies(copies2), postproduce(n));
-				buffer2->produce(TrackedCopies(copies2), postproduce(n));
-				buffer2->produce(TrackedCopies(copies2), postproduce(n));
+				buffer1->produce(move(instance_counter(copies1)), postproduce(n));
+				buffer1->produce(move(instance_counter(copies1)), postproduce(n));
+				buffer2->produce(move(instance_counter(copies2)), postproduce(n));
+				buffer2->produce(move(instance_counter(copies2)), postproduce(n));
+				buffer2->produce(move(instance_counter(copies2)), postproduce(n));
 
 				// ACT
 				buffer1.reset();
@@ -563,15 +546,15 @@ namespace pq
 			{
 				// INIT
 				int n, copies = 0;
-				auto_ptr< circular_buffer<TrackedCopies> > buffer(new circular_buffer<TrackedCopies>(5 * sizeof(TrackedCopies)));
+				unique_ptr< circular_buffer<instance_counter> > buffer(new circular_buffer<instance_counter>(5 * sizeof(instance_counter)));
 
-				buffer->produce(TrackedCopies(copies), postproduce(n));
-				buffer->produce(TrackedCopies(copies), postproduce(n));
-				buffer->produce(TrackedCopies(copies), postproduce(n));
-				buffer->produce(TrackedCopies(copies), postproduce(n));
-				buffer->produce(TrackedCopies(copies), postproduce(n));
-				buffer->consume(&dummy_consume<TrackedCopies>, preconsume(n, true));
-				buffer->produce(TrackedCopies(copies), postproduce(n));
+				buffer->produce(instance_counter(copies), postproduce(n));
+				buffer->produce(instance_counter(copies), postproduce(n));
+				buffer->produce(instance_counter(copies), postproduce(n));
+				buffer->produce(instance_counter(copies), postproduce(n));
+				buffer->produce(instance_counter(copies), postproduce(n));
+				buffer->consume(&dummy_consume<instance_counter>, preconsume(n, true));
+				buffer->produce(instance_counter(copies), postproduce(n));
 
 				// ACT
 				buffer.reset();
@@ -612,16 +595,46 @@ namespace pq
 				PolyDerivedNC<char, 7> v4(4);
 
 				// ACT
-				buffer.produce(v1, postproduce(n));
-				buffer.produce(v2, postproduce(n));
-				buffer.produce(v3, postproduce(n));
-				buffer.produce(v4, postproduce(n));
+				buffer.produce(move(v1), postproduce(n));
+				buffer.produce(move(v2), postproduce(n));
+				buffer.produce(move(v3), postproduce(n));
+				buffer.produce(move(v4), postproduce(n));
 
 				// ACT / ASSERT
-				buffer.consume(assert_value_nc(v1), preconsume(n, true));
-				buffer.consume(assert_value_nc(v2), preconsume(n, true));
-				buffer.consume(assert_value_nc(v3), preconsume(n, true));
-				buffer.consume(assert_value_nc(v4), preconsume(n, true));
+				buffer.consume(assert_value_nc(PolyDerivedNC<string, 5>("one")), preconsume(n, true));
+				buffer.consume(assert_value_nc(PolyDerivedNC<int, 15>(2)), preconsume(n, true));
+				buffer.consume(assert_value_nc(PolyDerivedNC<double, 23>(3.0)), preconsume(n, true));
+				buffer.consume(assert_value_nc(PolyDerivedNC<char, 7>(4)), preconsume(n, true));
+			}
+
+
+			test( ObjectIsMovedWhenMoveAttempted )
+			{
+				// INIT
+				int n, m = 0;
+				circular_buffer<instance_counter> buffer;
+				instance_counter v(m);
+
+				// ACT
+				buffer.produce(move(v), postproduce(n));
+
+				// ASSERT
+				assert_equal(1, m);
+			}
+
+
+			test( ObjectIsMovedWhenMoveAttemptedPoly )
+			{
+				// INIT
+				int n, m = 0;
+				circular_buffer< instance_counter, poly_entry<instance_counter> > buffer;
+				instance_counter v(m);
+
+				// ACT
+				buffer.produce(move(v), postproduce(n));
+
+				// ASSERT
+				assert_equal(1, m);
 			}
 
 		end_test_suite

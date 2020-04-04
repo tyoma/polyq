@@ -34,25 +34,17 @@
     <ClCompile>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CircularBufferTests.cpp" />
-    <ClCompile Include="FifoTests.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="PolyEntryTests.cpp" />
-    <ClCompile Include="QueueTests.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="QueueTests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\poly-queue\circular.h" />
-    <ClInclude Include="..\poly-queue\entry.h" />
-    <ClInclude Include="..\poly-queue\fifo.h" />
-    <ClInclude Include="..\poly-queue\queue.h" />
+    <ClInclude Include="..\polyq\circular.h" />
+    <ClInclude Include="..\polyq\entry.h" />
+    <ClInclude Include="..\polyq\queue.h" />
+    <ClInclude Include="helpers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

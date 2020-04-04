@@ -1,4 +1,6 @@
-#include <poly-queue/entry.h>
+#include <polyq/entry.h>
+
+#include "helpers.h"
 
 #include <ut/assert.h>
 #include <ut/test.h>
@@ -9,25 +11,25 @@ template <typename T>
 class destroyer
 {
 public:
-	destroyer(pq::byte *p, pq::byte *begin, pq::byte *end)
+	destroyer(polyq::byte *p, polyq::byte *begin, polyq::byte *end)
 		: _p(p), _begin(begin), _end(end)
 	{	}
 
 	~destroyer()
 	{
-		pq::poly_entry<T>::get(_p, _begin, _end); // Let _p wrap around when insufficient space is met.
-		pq::poly_entry<T>::destroy(_p);
+		polyq::poly_entry<T>::get(_p, _begin, _end); // Let _p wrap around when insufficient space is met.
+		polyq::poly_entry<T>::destroy(_p);
 	}
 
 private:
-	pq::byte *_p, *_begin, *_end;
+	polyq::byte *_p, *_begin, *_end;
 };
 
 #define __TOKENPASTE(x, y) x ## y
 #define TOKENPASTE(x, y) __TOKENPASTE(x, y)
 #define AUTO_DESTROY(type, p, begin, end) destroyer<type> TOKENPASTE(__d, __LINE__)(p, begin, end)
 
-namespace pq
+namespace polyq
 {
 	namespace tests
 	{
@@ -37,6 +39,9 @@ namespace pq
 			{
 				virtual ~Foo() { }
 				virtual string get_type() const = 0;
+
+			private:
+				const Foo &operator =(const Foo &rhs);
 			};
 
 			class Bar : public Foo
@@ -119,22 +124,16 @@ namespace pq
 			};
 
 
-			class BazNC : public Foo
+			class BazNC : public Foo, instance_counter
 			{
 			public:
 				BazNC(int value_, int &count)
-					: value(value_), _count(count)
-				{	++_count;	}
+					: value(value_), instance_counter(count)
+				{	}
 
-				BazNC(BazNC &other)
-					: value(other.value), _count(other._count)
-				{
-					++_count;
-					other.value = -1;
-				}
-
-				~BazNC()
-				{	--_count;	}
+				BazNC(BazNC &&other)
+					: value(other.value), instance_counter(static_cast<instance_counter &&>(other))
+				{	other.value = -1;	}
 
 			public:
 				int value;
@@ -142,9 +141,6 @@ namespace pq
 			private:
 				virtual string get_type() const
 				{	return "BazNC";	}
-
-			private:
-				int &_count;
 			};
 		}
 
@@ -443,7 +439,7 @@ namespace pq
 			}
 
 
-			test( NonConstantReferenceCanBePassedToConstructAnEntry )
+			test( EntryCanBeCreatedByMoving )
 			{
 				// INIT
 				int n = 0;
@@ -451,14 +447,14 @@ namespace pq
 
 				// ACT
 				byte *v1 = p;
-				poly_entry<Foo>::create(p, begin, end, o1);
+				poly_entry<Foo>::create(p, begin, end, move(o1));
 				AUTO_DESTROY(Foo, v1, begin, end);
 				byte *v2 = p;
-				poly_entry<Foo>::create(p, begin, end, o2);
+				poly_entry<Foo>::create(p, begin, end, move(o2));
 				AUTO_DESTROY(Foo, v2, begin, end);
 
 				// ASSERT
-				assert_equal(4, n);
+				assert_equal(2, n);
 				assert_equal(-1, o1.value);
 				assert_equal(-1, o2.value);
 				assert_equal("BazNC", poly_entry<Foo>::get(v1, begin, end).get_type());
@@ -476,23 +472,23 @@ namespace pq
 
 				// INIT / ACT
 				byte *v1 = p;
-				poly_entry<Foo>::create(p, begin, end, o1);
+				poly_entry<Foo>::create(p, begin, end, move(o1));
 				byte *v2 = p;
-				poly_entry<Foo>::create(p, begin, end, o2);
+				poly_entry<Foo>::create(p, begin, end, move(o2));
 
 				// ACT
 				poly_entry<Foo>::destroy(v1);
 
 				// ASSERT
 				assert_equal(v2, v1);
-				assert_equal(3, n);
+				assert_equal(1, n);
 
 				// ACT
 				poly_entry<Foo>::destroy(v2);
 
 				// ASSERT
 				assert_equal(p, v2);
-				assert_equal(2, n);
+				assert_equal(0, n);
 			}
 
 		end_test_suite
