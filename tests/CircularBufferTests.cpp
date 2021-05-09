@@ -268,6 +268,43 @@ namespace polyq
 			}
 
 
+			test( ProducedValueIsRetrievedOnConsumeWithIntCounter )
+			{
+				// INIT
+				int n[] = { 1, 1, };
+				vector<int> log1;
+				circular_buffer<int, static_entry<int>, int> b1, b2;
+
+				// ACT
+				b1.produce(17, postproduce(n[0]));
+				b2.produce(172211, postproduce(n[1]));
+
+				// ASSERT
+				assert_equal(1, n[0]);
+				assert_equal(1, n[1]);
+
+				// ACT / ASSERT
+				assert_is_true(b1.consume(consumer<int>(log1), preconsume(n[0], true)));
+
+				// ASSERT
+				assert_equal(1, n[0]);
+
+				int reference1[] = { 17, };
+
+				assert_equal(reference1, log1);
+
+				// ACT
+				b2.consume(consumer<int>(log1), preconsume(n[1], true));
+
+				// ASSERT
+				assert_equal(1, n[1]);
+
+				int reference2[] = { 17, 172211, };
+
+				assert_equal(reference2, log1);
+			}
+
+
 			struct preconsume_check_zero : nonassignable
 			{
 				preconsume_check_zero(circular_buffer< int, static_entry<int> > &buffer_)
