@@ -106,11 +106,11 @@ namespace polyq
 			{
 			public:
 				BazNC(int value_, int &count)
-					: value(value_), instance_counter(count)
+					: instance_counter(count), value(value_)
 				{	}
 
 				BazNC(BazNC &&other)
-					: value(other.value), instance_counter(static_cast<instance_counter &&>(other))
+					: instance_counter(static_cast<instance_counter &&>(other)), value(other.value)
 				{	other.value = -1;	}
 
 			public:

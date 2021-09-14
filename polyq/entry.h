@@ -39,8 +39,8 @@ namespace polyq
 			post_construct<FinalT>(at, d, new(d + 1) FinalT(std::move(value)));\
 		}
 
-		POLYQ_MULTI_CV_DEF(const &);
-		POLYQ_MULTI_CV_DEF(&&);
+		POLYQ_MULTI_CV_DEF(const &)
+		POLYQ_MULTI_CV_DEF(&&)
 
 #undef POLYQ_MULTI_CV_DEF
 
@@ -61,9 +61,9 @@ namespace polyq
 		{
 			struct type_check_t { type_check_t(const T *) {	} } type_check(&value);
 
-			if (end - at < sizeof(poly_entry_descriptor))
+			if (end - at < static_cast<int>(sizeof(poly_entry_descriptor)))
 				at = start;
-			else if (end - at < sizeof(poly_entry_descriptor) + sizeof(FinalT))
+			else if (end - at < static_cast<int>(sizeof(poly_entry_descriptor) + sizeof(FinalT)))
 				poly_entry_descriptor::from(at).size = 0, at = start;
 			return &poly_entry_descriptor::from(at);
 		}
@@ -85,7 +85,7 @@ namespace polyq
 
 	inline poly_entry_descriptor &poly_entry_descriptor::from(byte *&at, byte *start, byte *end) throw()
 	{
-		if (end - at < sizeof(poly_entry_descriptor))
+		if (end - at < static_cast<int>(sizeof(poly_entry_descriptor)))
 			return at = start, from(start);
 		poly_entry_descriptor &d = from(at);
 		return !d.size ? from(at = start) : d;

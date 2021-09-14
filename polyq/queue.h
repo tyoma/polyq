@@ -117,8 +117,8 @@ namespace polyq
 	inline void queue<T, EventT>::produce(FinalT cv object)\
 	{	_inner.produce(object, _postproducer);	}
 
-	POLYQ_MULTI_CV_DEF(const &);
-	POLYQ_MULTI_CV_DEF(&&);
+	POLYQ_MULTI_CV_DEF(const &)
+	POLYQ_MULTI_CV_DEF(&&)
 
 #undef POLYQ_MULTI_CV_DEF
 

@@ -68,8 +68,8 @@ namespace polyq
 		postproduce(_count.fetch_add(1, std::memory_order_release) + 1);\
 	}
 
-	POLYQ_MULTI_CV_DEF(const &);
-	POLYQ_MULTI_CV_DEF(&&);
+	POLYQ_MULTI_CV_DEF(const &)
+	POLYQ_MULTI_CV_DEF(&&)
 
 #undef POLYQ_MULTI_CV_DEF
 

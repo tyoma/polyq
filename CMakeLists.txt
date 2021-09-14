@@ -9,7 +9,13 @@ set(UTEE_NO_TESTS)
 
 include_directories(.)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+set(GCC_CLANG_COMPILER_OPTIONS -fPIC -Wpedantic -Wall)
+
+add_compile_options(
+	"$<$<CXX_COMPILER_ID:GNU>:$<$<COMPILE_LANGUAGE:C>:${GCC_CLANG_COMPILER_OPTIONS}>>"
+	"$<$<CXX_COMPILER_ID:GNU>:$<$<COMPILE_LANGUAGE:CXX>:${GCC_CLANG_COMPILER_OPTIONS}>>"
+)
+
 add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS)
 
 add_subdirectory(tests)
