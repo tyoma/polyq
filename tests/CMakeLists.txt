@@ -1,6 +1,4 @@
-include(utee-test)
-
-add_compile_options("$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-std=c++11>")
+cmake_minimum_required(VERSION 3.13)
 
 set(PQ_TEST_SOURCES
 	CircularBufferTests.cpp
